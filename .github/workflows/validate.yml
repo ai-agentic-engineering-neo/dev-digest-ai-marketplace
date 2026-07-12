@@ -1,0 +1,44 @@
+name: Validate marketplace
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for the version-bump diff against the base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Structural linter (no auth)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/validate-marketplace.mjs
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      # Catalog-level check without --strict: an empty `plugins: []` only
+      # produces a "no plugins defined" warning, which --strict would turn
+      # into a failure. Each real plugin is validated strictly below.
+      - name: Validate marketplace catalog
+        run: claude plugin validate .
+
+      - name: Validate each plugin (strict)
+        run: |
+          shopt -s nullglob
+          for dir in plugins/*/; do
+            if [ -f "$dir/.claude-plugin/plugin.json" ]; then
+              echo "→ $dir"
+              claude plugin validate "$dir" --strict
+            fi
+          done
