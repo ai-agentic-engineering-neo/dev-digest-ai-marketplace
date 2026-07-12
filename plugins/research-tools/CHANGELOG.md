@@ -2,11 +2,6 @@
 
 All notable changes to `research-tools` are documented here. Versioning follows [SemVer](https://semver.org/).
 
-## 1.0.1 — 2026-07-12
-
-### Changed
-- Clarified the `researcher` agent's "Cite everything" rule to prefer stable, canonical URLs over transient search-result links. Documentation-only; no behavior contract change.
-
 ## 1.0.0 — 2026-07-12
 
 ### Added
