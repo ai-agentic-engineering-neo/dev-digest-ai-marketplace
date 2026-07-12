@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "dev-digest-ai-marketplace",
+  "owner": {
+    "name": "DevDigest AI Engineering"
+  },
+  "metadata": {
+    "description": "Team catalog of Claude Code plugins (skills, agents, hooks, MCP)."
+  },
+  "plugins": []
+}
