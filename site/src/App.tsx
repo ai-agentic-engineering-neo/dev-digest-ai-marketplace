@@ -14,6 +14,7 @@ import { useCatalog, type CatalogData } from './data/useCatalog';
 import { useRoute } from './router/hashRouter';
 import { useProvider } from './search/useSearch';
 import type { IndexEntry } from './types';
+import { t } from './i18n';
 
 export default function App() {
   return (
@@ -31,8 +32,8 @@ function Shell() {
 
   return (
     <div className="app" data-theme={theme}>
-      {state.status === 'loading' && <Centered>…</Centered>}
-      {state.status === 'error' && <Centered>Не вдалося завантажити індекс: {state.error}</Centered>}
+      {state.status === 'loading' && <Centered>{t.app.loading}</Centered>}
+      {state.status === 'error' && <Centered>{t.app.loadError(state.error)}</Centered>}
       {state.status === 'ready' && <Ready data={state.data} />}
     </div>
   );

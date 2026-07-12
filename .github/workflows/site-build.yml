@@ -1,8 +1,8 @@
 name: Build catalog site
 
-# Окремий статус-чек саме для збірки сайту — навмисно НЕ змішаний із
-# "Validate marketplace" (harness/marketplace-перевірки в validate.yml).
-# Тільки будує (індекс + Vite), без деплою. Деплой робить pages.yml на push у main.
+# A dedicated status check just for the site build — intentionally NOT mixed
+# with "Validate marketplace" (the harness/marketplace checks in validate.yml).
+# Build only (index + Vite), no deploy. Deployment is handled by pages.yml on push to main.
 
 on:
   pull_request:

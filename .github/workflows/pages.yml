@@ -1,7 +1,7 @@
 name: Deploy catalog site to Pages
 
-# Деплой на GitHub Pages: будує індекс із plugins/** + Vite build → site/dist,
-# і публікує dist. Реіндексація автоматична на кожен реленвантний push у main.
+# Deploy to GitHub Pages: build the index from plugins/** + Vite build → site/dist,
+# then publish dist. Reindexing is automatic on every relevant push to main.
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
   pages: write
   id-token: write
 
-# Один активний деплой; нові пуші не скасовують уже запущений реліз.
+# One active deployment at a time; new pushes don't cancel an in-progress release.
 concurrency:
   group: pages
   cancel-in-progress: false
