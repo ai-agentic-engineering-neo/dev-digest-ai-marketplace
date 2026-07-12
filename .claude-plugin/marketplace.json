@@ -7,5 +7,30 @@
   "metadata": {
     "description": "Team catalog of Claude Code plugins (skills, agents, hooks, MCP)."
   },
-  "plugins": []
+  "plugins": [
+    {
+      "name": "engineering-paved-path",
+      "source": "./plugins/engineering-paved-path",
+      "description": "Shared engineering best-practice skills: React, Next.js, Fastify, testing, security, architecture, and full-stack foundations.",
+      "category": "development"
+    },
+    {
+      "name": "research-tools",
+      "source": "./plugins/research-tools",
+      "description": "Read-only research agent that gathers and fact-checks information from the codebase or the public web.",
+      "category": "development"
+    },
+    {
+      "name": "architecture-review",
+      "source": "./plugins/architecture-review",
+      "description": "Generalized read-only architecture reviewer that audits diffs against configurable structural contracts.",
+      "category": "review"
+    },
+    {
+      "name": "sdd-engineering",
+      "source": "./plugins/sdd-engineering",
+      "description": "Spec-Driven Development workflow: spec, plan, implement, verify, retro. Depends on the three plugins above.",
+      "category": "workflow"
+    }
+  ]
 }
