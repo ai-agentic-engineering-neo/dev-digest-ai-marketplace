@@ -1,9 +1,15 @@
-// English locale — mirrors the Messages shape from uk.ts.
+// Canonical locale and message shape. All user-facing UI copy lives here —
+// no hardcoded strings in components. To add a language, create a sibling file
+// of type Messages and select it in index.ts.
 import type { Kind } from '../types';
-import type { Messages } from './uk';
 
-export const en: Messages = {
+export const en = {
   locale: 'en-US',
+
+  app: {
+    loading: '…',
+    loadError: (msg: string) => `Failed to load the index: ${msg}`,
+  },
 
   brand: { name: 'Catalog', tag: 'dev-digest' },
 
@@ -137,3 +143,5 @@ export const en: Messages = {
     mcp: 'MCP',
   } as Record<Kind, string>,
 };
+
+export type Messages = typeof en;

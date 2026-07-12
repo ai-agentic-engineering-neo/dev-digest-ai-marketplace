@@ -1,353 +1,358 @@
-# SITE-SPEC — специфікація вебдодатка каталогу (GitHub Pages)
+# SITE-SPEC — catalog web app specification (GitHub Pages)
 
-> Специфікація UI-додатка, який публікується на GitHub Pages і дає команді
-> шукати та переглядати вміст цього marketplace (плагіни, скіли, агенти,
-> команди, hooks, MCP). Документ — вхід для дизайну й подальшої імплементації.
+> Specification for the UI app that is published to GitHub Pages and lets the
+> team search and browse the contents of this marketplace (plugins, skills,
+> agents, commands, hooks, MCP). This document is the entry point for design and
+> subsequent implementation.
 >
-> Статус: **draft v1**. Дата: 2026-07-12.
-> Джерела правил каталогу — [`PLUGIN-GUIDELINES.md`](./PLUGIN-GUIDELINES.md),
+> Status: **draft v1**. Date: 2026-07-12.
+> Sources of catalog rules — [`PLUGIN-GUIDELINES.md`](./PLUGIN-GUIDELINES.md),
 > [`temp/MARKETPLACE-RESEARCH.md`](./temp/MARKETPLACE-RESEARCH.md).
 
 ---
 
-## 1. Мета й межі
+## 1. Goal and scope
 
-**Мета.** Дати команді єдину точку входу, щоб *знайти* потрібний артефакт
-(«мені треба скіл для X»), *зрозуміти* що він робить і *поставити* його одним
-copy-paste. Каталог росте — UI має лишатись корисним і на 3, і на 50 плагінах.
+**Goal.** Give the team a single entry point to *find* the artifact they need
+("I need a skill for X"), *understand* what it does, and *install* it with one
+copy-paste. The catalog grows — the UI must stay useful at 3 plugins and at 50.
 
-**Аудиторія.** Внутрішня інженерна команда (dev-first). Очікують швидкий
-пошук з клавіатури, точні описи, робочі install-команди.
+**Audience.** Internal engineering team (dev-first). They expect fast
+keyboard-driven search, precise descriptions, and working install commands.
 
-**Не-цілі v1.** Рейтинги/лайки, коментарі, лічильники завантажень,
-авторизація, будь-яка персистенція користувача на сервері — усе це вимагає
-бекенду й тут свідомо не робиться. Редагування вмісту через UI — теж ні
-(джерело істини лишається git + PR-флоу).
-
----
-
-## 2. Ключове обмеження й наслідки
-
-GitHub Pages роздає **лише статику — жодного рантайм-бекенду**. Це визначає
-архітектуру:
-
-1. **Пошук — клієнтський.** Індекс збирається в CI під час білду й кладеться
-   поруч як статичний JSON. У браузері працює `fuzzy + keyword` (MiniSearch або
-   Fuse.js). Жодних запитів до сервера в рантаймі.
-2. **«Розумний» пошук ≠ LLM у рантаймі.** API-ключ не можна класти на публічну
-   статику. v1 — детермінований fuzzy-пошук по описах, frontmatter і тілу
-   markdown. Архітектура індексу одразу лишає місце під *precomputed embeddings*
-   (див. §12), щоб семантику додати без переписування фронтенду.
-3. **Джерело істини — репозиторій.** UI нічого не пише. Усе, що він показує,
-   походить з файлів у `plugins/**` та `marketplace.json`, зібраних білдом.
+**Non-goals for v1.** Ratings/likes, comments, download counters,
+authentication, any server-side user persistence — all of this requires a
+backend and is deliberately left out here. Editing content through the UI — also
+no (the source of truth stays git + the PR flow).
 
 ---
 
-## 3. Архітектура (загальна)
+## 2. Key constraint and its consequences
+
+GitHub Pages serves **static assets only — no runtime backend**. This dictates
+the architecture:
+
+1. **Search is client-side.** The index is assembled in CI at build time and
+   placed alongside as static JSON. In the browser it runs `fuzzy + keyword`
+   (MiniSearch or Fuse.js). No requests to a server at runtime.
+2. **"Smart" search ≠ LLM at runtime.** An API key must not be placed on public
+   static hosting. v1 is deterministic fuzzy search over descriptions,
+   frontmatter, and the markdown body. The index architecture leaves room from
+   the start for *precomputed embeddings* (see §12), so that semantics can be
+   added without rewriting the frontend.
+3. **The repository is the source of truth.** The UI writes nothing. Everything
+   it shows comes from files in `plugins/**` and `marketplace.json`, assembled
+   at build time.
+
+---
+
+## 3. Architecture (overview)
 
 ```
                     GitHub Actions (on push to main / PR preview)
   repo files  ──▶   scripts/build-index.mjs  ──▶  site/public/index.json
-  (plugins/**,       (парсер manifest+frontmatter+md,                   │
-   marketplace.json,  агрегатор релізів, граф залежностей)              │
+  (plugins/**,       (parser manifest+frontmatter+md,                   │
+   marketplace.json,  release aggregator, dependency graph)             │
    docs/**)                                                            ▼
                                               Vite build (React) ──▶ GitHub Pages
                                                     │
-                        браузер ◀── статичні: index.json + бандл + markdown-тіла
-                        (MiniSearch у пам'яті, hash-routing, рендер MD)
+                        browser ◀── static: index.json + bundle + markdown bodies
+                        (MiniSearch in memory, hash-routing, MD render)
 ```
 
-- **Індексатор** (`scripts/build-index.mjs`) — Node, лише вбудовані модулі
-  (тон задає наявний `validate-marketplace.mjs`). Обходить `plugins/**`,
-  читає manifest-и та frontmatter, збирає `index.json` (+ похідні: `graph.json`,
-  `releases.json`). Запускається і локально (`npm run build:index`), і в CI.
-- **Фронтенд** — Vite + React, hash-routing (`#/...`) заради сумісності зі
-  статичним хостингом без rewrite-правил.
-- **CI/CD** — GitHub Actions: на кожен push у `main` збирає індекс і сайт,
-  деплоїть на Pages. На PR — build-check (без деплою або в окреме preview-середовище).
+- **Indexer** (`scripts/build-index.mjs`) — Node, built-in modules only
+  (the tone is set by the existing `validate-marketplace.mjs`). Walks
+  `plugins/**`, reads manifests and frontmatter, assembles `index.json`
+  (+ derivatives: `graph.json`, `releases.json`). Runs both locally
+  (`npm run build:index`) and in CI.
+- **Frontend** — Vite + React, hash-routing (`#/...`) for compatibility with
+  static hosting that has no rewrite rules.
+- **CI/CD** — GitHub Actions: on every push to `main` it builds the index and
+  the site and deploys to Pages. On a PR — a build-check (no deploy, or a
+  separate preview environment).
 
 ---
 
-## 4. Модель даних (схема індексу)
+## 4. Data model (index schema)
 
-Один запис індексу = один шукабельний артефакт. Тип задається полем `kind`.
+One index record = one searchable artifact. The type is set by the `kind` field.
 
-### 4.1 Загальний запис `IndexEntry`
+### 4.1 General record `IndexEntry`
 
-| Поле | Тип | Опис |
+| Field | Type | Description |
 | --- | --- | --- |
-| `id` | string | стабільний унікальний ключ, напр. `plugin:react-tools` або `skill:react-tools/refactor` |
+| `id` | string | stable unique key, e.g. `plugin:react-tools` or `skill:react-tools/refactor` |
 | `kind` | enum | `plugin` \| `skill` \| `agent` \| `command` \| `hook` \| `mcp` |
-| `name` | string | технічне ім'я (kebab-case) |
-| `displayName` | string? | людський підпис для UI (з manifest `displayName`, інакше `name`) |
-| `description` | string | короткий опис (manifest/ frontmatter) |
-| `plugin` | string | ім'я плагіна-контейнера (для `plugin` = сам себе) |
-| `keywords` | string[] | теги для фасетів і пошуку |
-| `bodyText` | string | очищене від markdown-розмітки тіло README/SKILL.md — для повнотекстового пошуку |
-| `bodyHtmlPath` | string? | шлях до відрендереного/сирого MD для detail-view (lazy-load) |
-| `sourcePath` | string | шлях у репо (для «View on GitHub») |
-| `githubUrl` | string | повний лінк на файл/теку в GitHub |
+| `name` | string | technical name (kebab-case) |
+| `displayName` | string? | human-readable label for the UI (from manifest `displayName`, otherwise `name`) |
+| `description` | string | short description (manifest / frontmatter) |
+| `plugin` | string | name of the container plugin (for `plugin` = itself) |
+| `keywords` | string[] | tags for facets and search |
+| `bodyText` | string | README/SKILL.md body stripped of markdown markup — for full-text search |
+| `bodyHtmlPath` | string? | path to the rendered/raw MD for detail-view (lazy-load) |
+| `sourcePath` | string | path in the repo (for "View on GitHub") |
+| `githubUrl` | string | full link to the file/folder on GitHub |
 
-### 4.2 Розширення для `kind: plugin`
+### 4.2 Extension for `kind: plugin`
 
-| Поле | Тип | Опис |
+| Field | Type | Description |
 | --- | --- | --- |
-| `version` | string | SemVer з `plugin.json` |
-| `author` | {name, email?} | автор |
+| `version` | string | SemVer from `plugin.json` |
+| `author` | {name, email?} | author |
 | `installCommand` | string | `/plugin install <name>@dev-digest-ai-marketplace` |
-| `components` | {skills, agents, commands, hooks, mcp: number} | лічильники для картки |
-| `dependencies` | string[] | namespaced deps (напр. `engineering-paved-path:react-best-practices`) |
-| `compatibility` | string? | стисло з `COMPATIBILITY.md` (напр. мін. версія Claude Code) |
-| `changelog` | {version, date?, summary}[] | розпарсений `CHANGELOG.md` |
-| `sourceType` | enum | `path` \| `github` \| `url` \| `git-subdir` \| `npm` (з `marketplace.json`) |
+| `components` | {skills, agents, commands, hooks, mcp: number} | counters for the card |
+| `dependencies` | string[] | namespaced deps (e.g. `engineering-paved-path:react-best-practices`) |
+| `compatibility` | string? | condensed from `COMPATIBILITY.md` (e.g. min. Claude Code version) |
+| `changelog` | {version, date?, summary}[] | parsed `CHANGELOG.md` |
+| `sourceType` | enum | `path` \| `github` \| `url` \| `git-subdir` \| `npm` (from `marketplace.json`) |
 
-### 4.3 Розширення для `kind: skill|agent|command`
+### 4.3 Extension for `kind: skill|agent|command`
 
-| Поле | Тип | Опис |
+| Field | Type | Description |
 | --- | --- | --- |
-| `tools` | string[]? | заявлені tools/permissions з frontmatter |
-| `invocation` | string? | як викликати (напр. `/refactor`, `@react-analyzer`) |
-| `model` | string? | якщо задано у frontmatter агента |
+| `tools` | string[]? | declared tools/permissions from frontmatter |
+| `invocation` | string? | how to invoke (e.g. `/refactor`, `@react-analyzer`) |
+| `model` | string? | if set in the agent's frontmatter |
 
-### 4.4 Похідні файли
+### 4.4 Derived files
 
-- `graph.json` — вузли (плагіни) + ребра (залежності) для фічі «Граф залежностей».
-- `releases.json` — злиті changelog-и всіх плагінів, відсортовані за версією/датою, для «What's new» і JSON/RSS feed.
-- `stats.json` (або поле в `index.json`) — агреговані лічильники для stats-плитки.
-- `collections.json` — **курований вручну** конфіг наборів (не автогенерується).
+- `graph.json` — nodes (plugins) + edges (dependencies) for the "Dependency graph" feature.
+- `releases.json` — merged changelogs of all plugins, sorted by version/date, for "What's new" and the JSON/RSS feed.
+- `stats.json` (or a field in `index.json`) — aggregated counters for the stats tile.
+- `collections.json` — **manually curated** config of sets (not auto-generated).
 
-> **Порожній стан.** Зараз `plugins: []`. Індексатор має коректно віддавати
-> порожній `index.json`, а UI — показувати empty-state (див. §7.1), не падати.
+> **Empty state.** Right now `plugins: []`. The indexer must correctly emit an
+> empty `index.json`, and the UI must show an empty-state (see §7.1), not crash.
 
 ---
 
-## 5. Функціонал (повний обсяг)
+## 5. Functionality (full scope)
 
-Зведення того, що входить у v1 (усі запропоновані фічі).
+A summary of what goes into v1 (all proposed features).
 
-| # | Фіча | Пріоритет |
+| # | Feature | Priority |
 | --- | --- | --- |
-| 1 | Пошук по всьому вмісту, результати картками | P0 |
-| 2 | Copy install на картці | P0 |
-| 3 | Detail-view з deep-link | P0 |
-| 4 | Browse + фасети (тип, keyword, author, plugin) | P1 |
+| 1 | Search across all content, results as cards | P0 |
+| 2 | Copy install on the card | P0 |
+| 3 | Detail-view with deep-link | P0 |
+| 4 | Browse + facets (type, keyword, author, plugin) | P1 |
 | 5 | Command palette (Cmd/Ctrl+K) | P1 |
-| 6 | What's new (стрічка релізів) | P1 |
-| 7 | Stats-плитка | P1 |
-| 8 | Онбординг «як підключити marketplace» | P1 |
-| 9 | Граф залежностей | P2 |
-| 10 | Collections (куровані набори) | P2 |
+| 6 | What's new (release feed) | P1 |
+| 7 | Stats tile | P1 |
+| 8 | Onboarding "how to connect the marketplace" | P1 |
+| 9 | Dependency graph | P2 |
+| 10 | Collections (curated sets) | P2 |
 | 11 | Compatibility / health badges | P2 |
-| 12 | JSON / RSS feed нових плагінів | P2 |
+| 12 | JSON / RSS feed of new plugins | P2 |
 
-Пріоритети — для послідовності імплементації/дизайну, не для скорочення обсягу.
+Priorities are for the order of implementation/design, not for cutting scope.
 
 ---
 
-## 6. Інформаційна архітектура й маршрути
+## 6. Information architecture and routes
 
-Hash-routing (deep-linkable, працює на статиці):
+Hash-routing (deep-linkable, works on static hosting):
 
-| Маршрут | Екран |
+| Route | Screen |
 | --- | --- |
-| `#/` | Головна: пошук + stats + what's new + вхід у browse |
-| `#/search?q=&kind=&keyword=&author=` | Результати пошуку/фасетів (стан у URL — shareable) |
-| `#/plugin/<name>` | Detail плагіна |
-| `#/artifact/<id>` | Detail скіла/агента/команди/hook/mcp |
-| `#/collections`, `#/collections/<id>` | Набори |
-| `#/graph` | Граф залежностей |
-| `#/whats-new` | Повна стрічка релізів |
-| `#/getting-started` | Онбординг |
+| `#/` | Home: search + stats + what's new + entry to browse |
+| `#/search?q=&kind=&keyword=&author=` | Search/facet results (state in the URL — shareable) |
+| `#/plugin/<name>` | Plugin detail |
+| `#/artifact/<id>` | Detail of a skill/agent/command/hook/mcp |
+| `#/collections`, `#/collections/<id>` | Sets |
+| `#/graph` | Dependency graph |
+| `#/whats-new` | Full release feed |
+| `#/getting-started` | Onboarding |
 
-Глобальні елементи на всіх екранах: топбар (лого + глобальний search-input +
-кнопка Cmd+K + перемикач теми), футер (лінк на репо, версія каталогу, лінк на feed).
+Global elements on all screens: top bar (logo + global search input +
+Cmd+K button + theme toggle), footer (link to the repo, catalog version, link to the feed).
 
 ---
 
-## 7. Екрани та UX (для дизайну)
+## 7. Screens and UX (for design)
 
-### 7.1 Головна (`#/`)
+### 7.1 Home (`#/`)
 
-Секції зверху вниз:
-1. **Hero + пошук.** Великий інпут з плейсхолдером на кшталт
-   «Опиши, що треба — напр. "скіл для рефакторингу React"». Під ним — швидкі
-   chips найпопулярніших keyword-ів.
-2. **Stats-плитка** (фіча 7): N плагінів · N скілів · N агентів · N команд · N MCP.
-   Числа клікабельні → ведуть у browse з відповідним фасетом.
-3. **What's new** (фіча 6): 3–5 останніх релізів картками (плагін, версія, дата, summary).
-4. **Browse-вхід**: кнопки/таби за `kind` + лінк на Collections і Graph.
+Sections top to bottom:
+1. **Hero + search.** A large input with a placeholder along the lines of
+   "Describe what you need — e.g. \"a skill for refactoring React\"". Below it —
+   quick chips of the most popular keywords.
+2. **Stats tile** (feature 7): N plugins · N skills · N agents · N commands · N MCP.
+   The numbers are clickable → they lead into browse with the corresponding facet.
+3. **What's new** (feature 6): the 3–5 latest releases as cards (plugin, version, date, summary).
+4. **Browse entry**: buttons/tabs by `kind` + link to Collections and Graph.
 
-**Empty-state (нуль плагінів):** дружнє повідомлення + CTA на
-`#/getting-started` і `CONTRIBUTING.md` («Каталог порожній — додай перший плагін»).
+**Empty-state (zero plugins):** a friendly message + a CTA to
+`#/getting-started` and `CONTRIBUTING.md` ("The catalog is empty — add the first plugin").
 
-### 7.2 Результати пошуку (`#/search`)
+### 7.2 Search results (`#/search`)
 
-- Ліворуч (desktop) / у drawer (mobile) — **панель фасетів** (фіча 4):
-  `kind` (мультивибір), `keyword`, `author`, `plugin`. Стан фасетів і запит —
-  у query-параметрах URL (shareable, back/forward працює).
-- Праворуч — **сітка карток**. Сортування: relevance (деф.), name, останнє оновлення.
-- Порожній результат: «Нічого не знайшли» + пропозиції (скинути фасети,
-  найближчі за keyword).
+- On the left (desktop) / in a drawer (mobile) — the **facet panel** (feature 4):
+  `kind` (multi-select), `keyword`, `author`, `plugin`. Facet state and the query
+  live in the URL query parameters (shareable, back/forward work).
+- On the right — a **grid of cards**. Sorting: relevance (default), name, last updated.
+- Empty result: "Nothing found" + suggestions (reset facets,
+  nearest by keyword).
 
-**Картка артефакту (ключовий компонент):**
+**Artifact card (the key component):**
 ```
 ┌─────────────────────────────────────────────┐
 │ [kind-badge]  displayName            v1.2.0  │
 │ ─────────────────────────────────────────── │
-│ Короткий опис у 2 рядки з ellipsis…           │
+│ Short description over 2 lines with ellipsis… │
 │                                               │
 │ #keyword #keyword #keyword                    │
 │ ─────────────────────────────────────────── │
 │ plugin · author        [Copy install] [Open] │
 └─────────────────────────────────────────────┘
 ```
-- `kind-badge` — колірний бейдж типу (plugin/skill/agent/command/hook/mcp).
-- **[Copy install]** (фіча 2) — на плагіні копіює install-команду; на
-  під-артефакті копіює команду встановлення батьківського плагіна + показує
-  invocation (напр. `/refactor`). Стан «Скопійовано ✓» на 2 c.
+- `kind-badge` — a colored type badge (plugin/skill/agent/command/hook/mcp).
+- **[Copy install]** (feature 2) — on a plugin it copies the install command; on
+  a sub-artifact it copies the install command of the parent plugin + shows the
+  invocation (e.g. `/refactor`). "Copied ✓" state for 2 s.
 - **[Open]** → detail-view.
-- Матч підсвічується (highlight) у назві/описі.
+- The match is highlighted in the name/description.
 
-### 7.3 Detail плагіна (`#/plugin/<name>`)
+### 7.3 Plugin detail (`#/plugin/<name>`)
 
-- **Хедер:** displayName, version-badge, kind, author, compatibility-badge
-  (фіча 11), кнопки **Copy install** та **View on GitHub**.
-- **Склад плагіна:** списки skills/agents/commands/hooks/MCP — кожен елемент
-  клікабельний у свій `#/artifact/<id>`.
-- **Залежності** (фіча 9, локально): чіпи deps з лінками; кнопка «Показати в графі».
-- **README:** відрендерений markdown (lazy-load тіла).
-- **Changelog:** акордеон з `releases.json` по цьому плагіну.
+- **Header:** displayName, version-badge, kind, author, compatibility-badge
+  (feature 11), the **Copy install** and **View on GitHub** buttons.
+- **Plugin contents:** lists of skills/agents/commands/hooks/MCP — each item is
+  clickable into its own `#/artifact/<id>`.
+- **Dependencies** (feature 9, locally): dep chips with links; a "Show in graph" button.
+- **README:** rendered markdown (lazy-loaded body).
+- **Changelog:** an accordion from `releases.json` for this plugin.
 
-### 7.4 Detail під-артефакту (`#/artifact/<id>`)
+### 7.4 Sub-artifact detail (`#/artifact/<id>`)
 
-Хедер (тип, ім'я, invocation, tools/permissions як чіпи), breadcrumb до
-плагіна, кнопка Copy install батьківського плагіна, відрендерене тіло SKILL.md/agent.md.
+Header (type, name, invocation, tools/permissions as chips), a breadcrumb to the
+plugin, a Copy install button for the parent plugin, the rendered body of SKILL.md/agent.md.
 
-### 7.5 Command palette (фіча 5)
+### 7.5 Command palette (feature 5)
 
-Cmd/Ctrl+K — модалка з тим самим індексом: миттєвий інкрементальний пошук,
-навігація стрілками, Enter → detail. Дає dev-first «швидкий стрибок» будь-звідки.
+Cmd/Ctrl+K — a modal with the same index: instant incremental search,
+arrow-key navigation, Enter → detail. Gives a dev-first "quick jump" from anywhere.
 
-### 7.6 Collections (фіча 10)
+### 7.6 Collections (feature 10)
 
-Куровані набори з `collections.json` (title, опис, список `id` артефактів).
-Список наборів → сторінка набору з картками. Приклад: «Starter pack для React».
+Curated sets from `collections.json` (title, description, list of artifact `id`s).
+List of sets → set page with cards. Example: "Starter pack for React".
 
-### 7.7 Граф залежностей (`#/graph`, фіча 9)
+### 7.7 Dependency graph (`#/graph`, feature 9)
 
-Візуалізація `graph.json` (вузли-плагіни, ребра-залежності). Клік на вузол →
-detail плагіна. Легенда, зум/пан. Порожній/single-node стан — коректний.
+Visualization of `graph.json` (plugin nodes, dependency edges). Click a node →
+plugin detail. Legend, zoom/pan. The empty/single-node state is handled correctly.
 
-### 7.8 What's new (`#/whats-new`, фіча 6)
+### 7.8 What's new (`#/whats-new`, feature 6)
 
-Повна хронологія релізів із `releases.json`. Лінк «Subscribe» → JSON/RSS feed (фіча 12).
+The full chronology of releases from `releases.json`. A "Subscribe" link → JSON/RSS feed (feature 12).
 
-### 7.9 Getting started (`#/getting-started`, фіча 8)
+### 7.9 Getting started (`#/getting-started`, feature 8)
 
-Рендер кроків підключення з copy-кнопками (узгоджено з `README.md`):
+Renders the connection steps with copy buttons (aligned with `README.md`):
 `/plugin marketplace add burnjohn/dev-digest-ai-marketplace`,
-`/plugin install <name>@dev-digest-ai-marketplace`, різниця
+`/plugin install <name>@dev-digest-ai-marketplace`, the difference between
 `marketplace update` vs `plugin update`.
 
 ---
 
-## 8. Поведінка пошуку (v1: fuzzy + keyword)
+## 8. Search behavior (v1: fuzzy + keyword)
 
-- **Рушій:** MiniSearch (або Fuse.js) у пам'яті, індекс будується з `index.json`
-  один раз при завантаженні.
-- **Шукані поля з вагами:** `displayName`/`name` (найвища) → `keywords` →
-  `description` → `bodyText` (найнижча).
-- **Можливості:** префіксний матч, fuzzy (1–2 помилки), highlight збігів,
-  boost точних збігів імені.
-- **Фасети** застосовуються як пост-фільтр над результатами (AND між різними
-  фасетами, OR усередині одного).
-- **Продуктивність:** цільовий розмір `index.json` — тримати ≲ кількох сотень KB
-  gzip; `bodyText` за потреби скорочувати. Тіла для рендеру — окремо, lazy.
-- **Стан у URL:** `q`, `kind`, `keyword`, `author` — щоб результат був shareable.
+- **Engine:** MiniSearch (or Fuse.js) in memory, the index is built from `index.json`
+  once at load time.
+- **Searched fields with weights:** `displayName`/`name` (highest) → `keywords` →
+  `description` → `bodyText` (lowest).
+- **Capabilities:** prefix match, fuzzy (1–2 errors), highlight of matches,
+  boost of exact name matches.
+- **Facets** are applied as a post-filter over the results (AND between different
+  facets, OR within a single one).
+- **Performance:** target `index.json` size — keep it ≲ a few hundred KB
+  gzipped; shorten `bodyText` if needed. Bodies for rendering are separate, lazy.
+- **State in the URL:** `q`, `kind`, `keyword`, `author` — so the result is shareable.
 
 ---
 
-## 9. Технічний стек
+## 9. Tech stack
 
-| Шар | Вибір | Причина |
+| Layer | Choice | Reason |
 | --- | --- | --- |
-| Фронтенд | **React + Vite** | компонентний, звичний команді, легко рости |
-| Мова | TypeScript | типізований `IndexEntry`, менше помилок на рості схеми |
-| Пошук | MiniSearch / Fuse.js | клієнтський fuzzy, малий бандл |
-| Роутинг | hash-router (light) | статичний хостинг без rewrite |
-| Рендер MD | `markdown-it` / `marked` + sanitize | detail-view README/SKILL.md |
-| Граф | лёгка graph-віз (напр. `@xyflow`/`vis-network` — уточнити на дизайні) | фіча 9 |
-| Індексатор | Node, вбудовані модулі | у стилі `validate-marketplace.mjs`, без залежностей |
-| CI/CD | GitHub Actions → Pages | наявний патерн репо |
+| Frontend | **React + Vite** | component-based, familiar to the team, easy to grow |
+| Language | TypeScript | typed `IndexEntry`, fewer errors as the schema grows |
+| Search | MiniSearch / Fuse.js | client-side fuzzy, small bundle |
+| Routing | hash-router (light) | static hosting without rewrites |
+| MD render | `markdown-it` / `marked` + sanitize | detail-view README/SKILL.md |
+| Graph | a light graph-viz (e.g. `@xyflow`/`vis-network` — to be confirmed at design) | feature 9 |
+| Indexer | Node, built-in modules | in the style of `validate-marketplace.mjs`, no dependencies |
+| CI/CD | GitHub Actions → Pages | existing repo pattern |
 
-> Точні бібліотеки MD-рендеру та графа фіксуємо на етапі дизайну; вимога —
-> мінімальний бандл і безпечний рендер (sanitize untrusted markdown).
+> The exact MD-render and graph libraries are fixed at the design stage; the
+> requirement is a minimal bundle and safe rendering (sanitize untrusted markdown).
 
 ---
 
-## 10. Білд і CI/CD
+## 10. Build and CI/CD
 
-1. `npm run build:index` → генерує `index.json`, `graph.json`, `releases.json`,
-   `stats.json` у `site/public/`.
-2. `npm run build` (Vite) → статика в `site/dist/`.
+1. `npm run build:index` → generates `index.json`, `graph.json`, `releases.json`,
+   `stats.json` in `site/public/`.
+2. `npm run build` (Vite) → static assets in `site/dist/`.
 3. GitHub Actions:
-   - **PR:** прогнати індексатор + `vite build` як check (плюс наявний
-     `validate-marketplace.mjs`). Опційно — deploy preview.
-   - **push to `main`:** повний білд + deploy на GitHub Pages.
-4. Base path Vite виставити під `https://<owner>.github.io/dev-digest-ai-marketplace/`.
+   - **PR:** run the indexer + `vite build` as a check (plus the existing
+     `validate-marketplace.mjs`). Optionally — a deploy preview.
+   - **push to `main`:** full build + deploy to GitHub Pages.
+4. Set the Vite base path to `https://<owner>.github.io/dev-digest-ai-marketplace/`.
 
-Індексатор і сайт живуть у власній піддиректорії (напр. `site/`), щоб не
-змішуватися зі структурою плагінів. Реліз-cadence сайту незалежний від плагінів
-(узгоджено з принципом репо про окремі життєві цикли).
-
----
-
-## 11. Нефункціональні вимоги
-
-- **Продуктивність:** статика + один JSON; ціль — швидкий LCP, пошук без відчутної
-  затримки на сотнях записів. Lazy-load важких тіл і графа.
-- **Доступність:** повна навігація з клавіатури (особливо Cmd+K і фасети),
-  видимий focus, ARIA для карток/модалок, контраст під темну й світлу теми.
-- **Адаптивність:** desktop (сітка + бокова панель фасетів) і mobile (фасети в drawer).
-- **Приватність:** без трекерів і зовнішніх запитів у рантаймі за замовчуванням.
-- **Стійкість:** порожній каталог, плагін без README/keywords, зламаний
-  frontmatter — деградують м'яко (індексатор пропускає з warning, UI не падає).
-- **i18n:** інтерфейсні тексти — українською (як наявні docs); контент
-  артефактів показуємо as-is.
+The indexer and the site live in their own subdirectory (e.g. `site/`) so as not
+to mix with the plugin structure. The site's release cadence is independent of the
+plugins (aligned with the repo principle of separate lifecycles).
 
 ---
 
-## 12. Майбутнє: семантичний пошук (embeddings)
+## 11. Non-functional requirements
 
-Готуємо архітектуру, не імплементуємо у v1:
-- У CI (де секрети дозволені) генерувати вектори для `description`+`bodyText`
-  кожного запису, зберігати як окремий статичний `embeddings.json`.
-- У браузері — косинусна близькість запиту (запит теж треба векторизувати; для
-  повністю offline-варіанту — легка модель у WASM або гібрид: keyword-префільтр +
-  векторний re-rank).
-- Абстрагувати пошук за інтерфейсом `SearchProvider`, щоб `KeywordProvider`
-  (v1) і майбутній `SemanticProvider` були взаємозамінні без змін в UI.
-
----
-
-## 13. Відкриті питання (зафіксувати на дизайні)
-
-1. Візуальна мова: чи спиратись на існуючий дизайн-систем команди, чи власний мінімалізм?
-2. Бібліотека графа (баланс бандл/можливості).
-3. Формат `collections.json` і хто його курує (окремий CODEOWNERS?).
-4. PR-preview деплой — потрібен чи достатньо build-check?
-5. Чи виносити сайт в окремий репо на майбутнє, чи лишати піддиректорією `site/`.
+- **Performance:** static assets + a single JSON; the goal is a fast LCP, search
+  without noticeable latency on hundreds of records. Lazy-load heavy bodies and the graph.
+- **Accessibility:** full keyboard navigation (especially Cmd+K and facets),
+  visible focus, ARIA for cards/modals, contrast for dark and light themes.
+- **Responsiveness:** desktop (grid + side facet panel) and mobile (facets in a drawer).
+- **Privacy:** no trackers and no external requests at runtime by default.
+- **Resilience:** an empty catalog, a plugin without README/keywords, broken
+  frontmatter — all degrade gracefully (the indexer skips with a warning, the UI does not crash).
+- **i18n:** interface texts are in English, kept in a single locale file
+  (`site/src/i18n/`); artifact content is shown as-is.
 
 ---
 
-## 14. Критерії приймання v1
+## 12. Future: semantic search (embeddings)
 
-- Пошук по імені/опису/keywords/тілу повертає релевантні картки з highlight.
-- Copy install копіює коректну команду для плагіна.
-- Detail-view відкривається за deep-link і рендерить README/SKILL.md.
-- Фасети фільтрують і зберігаються в URL.
-- Cmd+K відкриває палітру й веде на артефакт.
-- Головна показує stats і what's new; порожній каталог дає коректний empty-state.
-- Collections, граф залежностей, compatibility-badges і JSON/RSS feed присутні й наповнюються з індексу.
-- Сайт збирається в CI й деплоїться на GitHub Pages; індексатор коректно
-  відпрацьовує на порожньому `plugins/`.
+We prepare the architecture, we do not implement it in v1:
+- In CI (where secrets are allowed), generate vectors for `description`+`bodyText`
+  of each record and store them as a separate static `embeddings.json`.
+- In the browser — cosine similarity of the query (the query also needs to be
+  vectorized; for a fully offline variant — a light model in WASM or a hybrid:
+  keyword pre-filter + vector re-rank).
+- Abstract search behind a `SearchProvider` interface, so that `KeywordProvider`
+  (v1) and a future `SemanticProvider` are interchangeable without UI changes.
+
+---
+
+## 13. Open questions (to settle at design)
+
+1. Visual language: rely on the team's existing design system, or our own minimalism?
+2. Graph library (bundle/capability balance).
+3. The `collections.json` format and who curates it (a separate CODEOWNERS?).
+4. PR-preview deploy — needed, or is a build-check enough?
+5. Whether to move the site into a separate repo in the future, or keep it as the `site/` subdirectory.
+
+---
+
+## 14. v1 acceptance criteria
+
+- Search over name/description/keywords/body returns relevant cards with highlight.
+- Copy install copies the correct command for a plugin.
+- Detail-view opens via a deep-link and renders README/SKILL.md.
+- Facets filter and are preserved in the URL.
+- Cmd+K opens the palette and leads to an artifact.
+- The home screen shows stats and what's new; an empty catalog gives a correct empty-state.
+- Collections, the dependency graph, compatibility-badges, and the JSON/RSS feed are present and populated from the index.
+- The site builds in CI and deploys to GitHub Pages; the indexer works correctly
+  on an empty `plugins/`.

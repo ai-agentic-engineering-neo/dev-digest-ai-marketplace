@@ -1,34 +1,34 @@
-# Дослідження: як правильно створити marketplace-репозиторій для Claude Code
+# Research: how to correctly create a marketplace repository for Claude Code
 
-> Мета документа — зафіксувати вимоги й гарні практики з першоджерел, щоб **після** готовності репозиторію пройтися чек-лістом і перевірити, що все зроблено правильно.
+> The goal of this document is to capture requirements and good practices from primary sources, so that **after** the repository is ready we can go through a checklist and verify everything was done correctly.
 >
-> Дата дослідження: 2026-07-12. Джерела — офіційна документація Claude Code + публічні best-practices статті (див. розділ «Джерела»).
+> Research date: 2026-07-12. Sources — the official Claude Code documentation + public best-practices articles (see the "Sources" section).
 >
-> Примітка: окремих інструкцій під назвою «CodeCoda» в мережі немає — CodeCoda це провайдер курсу; авторитетне джерело правил = офіційна документація Claude Code, на яку спирається урок L08.
+> Note: there are no separate instructions online under the name "CodeCoda" — CodeCoda is the course provider; the authoritative source of the rules = the official Claude Code documentation, which lesson L08 relies on.
 
 ---
 
-## 1. Що це за репозиторій
+## 1. What kind of repository this is
 
-Marketplace для Claude Code — звичайний git-репозиторій з одним обов'язковим файлом-каталогом `.claude-plugin/marketplace.json`. Публікувати в npm або окремо хостити не треба: Claude Code читає каталог напряму з GitHub/GitLab/git-хоста. Кожен плагін лежить у власній піддиректорії зі своїм `plugin.json`.
+A marketplace for Claude Code is an ordinary git repository with one mandatory catalog file, `.claude-plugin/marketplace.json`. There is no need to publish to npm or host it separately: Claude Code reads the catalog directly from GitHub/GitLab/a git host. Each plugin lives in its own subdirectory with its own `plugin.json`.
 
-## 2. Офіційна структура репозиторію
+## 2. Official repository structure
 
 ```
 my-marketplace/
 ├── .claude-plugin/
-│   └── marketplace.json          # каталог (ОБОВ'ЯЗКОВО, у корені репо)
+│   └── marketplace.json          # catalog (MANDATORY, at the repo root)
 ├── plugins/
 │   ├── my-plugin/
 │   │   ├── .claude-plugin/
-│   │   │   └── plugin.json        # маніфест плагіна (ОБОВ'ЯЗКОВО)
-│   │   ├── commands/              # slash-команди (опційно)
-│   │   ├── agents/                # агенти (опційно)
-│   │   ├── skills/                # skills (опційно)
+│   │   │   └── plugin.json        # plugin manifest (MANDATORY)
+│   │   ├── commands/              # slash commands (optional)
+│   │   ├── agents/                # agents (optional)
+│   │   ├── skills/                # skills (optional)
 │   │   │   └── skill-name/
 │   │   │       └── SKILL.md
-│   │   ├── hooks/                 # обробники подій (опційно)
-│   │   ├── .mcp.json              # конфіг MCP-серверів (опційно)
+│   │   ├── hooks/                 # event handlers (optional)
+│   │   ├── .mcp.json              # MCP server config (optional)
 │   │   ├── README.md
 │   │   ├── CHANGELOG.md
 │   │   └── COMPATIBILITY.md
@@ -39,14 +39,14 @@ my-marketplace/
 └── README.md
 ```
 
-## 3. Обов'язкові поля
+## 3. Mandatory fields
 
 ### `marketplace.json`
-- `name` — string, kebab-case, без пробілів. **Публічний**: користувачі бачать його при `/plugin install foo@your-marketplace`. Один marketplace на ім'я в користувача (додання другого з тим же ім'ям заміщує перший).
-- `owner` — object; поле `name` обов'язкове (`email` опційно).
-- `plugins` — масив; кожен запис мінімально має `name` + `source`.
+- `name` — string, kebab-case, no spaces. **Public**: users see it in `/plugin install foo@your-marketplace`. One marketplace per name per user (adding a second one with the same name replaces the first).
+- `owner` — object; the `name` field is mandatory (`email` optional).
+- `plugins` — array; each entry has at minimum `name` + `source`.
 
-Мінімальний приклад:
+Minimal example:
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
@@ -57,123 +57,123 @@ my-marketplace/
   ]
 }
 ```
-> `$schema` дає автокомпліт/валідацію в редакторі; Claude Code ігнорує це поле під час завантаження.
+> `$schema` provides autocomplete/validation in the editor; Claude Code ignores this field during loading.
 
 ### `plugin.json` (`plugins/<name>/.claude-plugin/plugin.json`)
-- Мінімум: `name`, `version`, `description`.
-- `author` — object (`name` обов'язково, `email` опційно).
-- `repository` — **string URL**, НЕ об'єкт (`{"type":"git",...}` спричинить помилку валідації).
+- Minimum: `name`, `version`, `description`.
+- `author` — object (`name` mandatory, `email` optional).
+- `repository` — **string URL**, NOT an object (`{"type":"git",...}` will cause a validation error).
 
-## 4. Нюанси та пастки (з офіційних docs)
+## 4. Nuances and pitfalls (from the official docs)
 
-- **`version` керує оновленнями.** Якщо задано — апдейт прийде лише коли ти зміниш це поле (бампай на кожному релізі). Якщо `version` пропущено в git-хостингу — **кожен commit рахується новою версією**. Для точного пінінгу — `sha` (повний 40-символьний commit).
-- **`name` фактично незмінний.** Користувачі мають плагін під цим slug; перейменування ламає інсталяцію (`plugin-not-found`).
-  - Для підпису в UI — `displayName` (можна пробіли/регістр; ≥ 2.1.143).
-  - Для реального перейменування/видалення — мапа `renames` (≥ 2.1.193).
-- **Relative paths** резолвляться відносно **кореня репо** (директорії з `.claude-plugin/`), а не самої `.claude-plugin/`. Мають починатися з `./`. Не використовувати `../` за межі кореня.
-  - ⚠️ Відносні шляхи **не працюють при роздачі через прямий URL** на `marketplace.json` (качається лише сам файл). Для URL-дистрибуції — `github`/`git url`/`npm` source.
-  - Опційно `metadata.pluginRoot: "./plugins"` дозволяє писати `"source": "formatter"` замість `"./plugins/formatter"`.
-- **Marketplace source ≠ plugin source** — пінуються незалежно; плагін може жити в іншому репо.
-  - Marketplace source: підтримує `ref` (branch/tag), **не** `sha`.
-  - Plugin source: підтримує і `ref`, і `sha`. Якщо задані обидва — `sha` є ефективним піном.
-- **Типи source плагіна:** relative path, `github` (`repo`,`ref?`,`sha?`), `url` (`url`,`ref?`,`sha?`), `git-subdir` (`url`,`path`,`ref?`,`sha?` — sparse clone для монорепо), `npm` (`package`,`version?`,`registry?`).
-- **Плагіни копіюються в кеш** (`~/.claude/plugins/cache`) — не можна посилатися на файли поза текою плагіна через `../`. Для скриптів/хуків/MCP — `${CLAUDE_PLUGIN_ROOT}`; для стану, що переживає оновлення — `${CLAUDE_PLUGIN_DATA}`; для спільних файлів — symlink.
-- **Reserved names** (не для сторонніх): `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `claude-plugins-community`, `agent-skills`, `anthropic-*` тощо, і будь-що, що імітує офіційні джерела. Інакше маркетплейс перестане завантажуватись.
-- **`strict` (default `true`)** — `plugin.json` є джерелом істини для компонентів. З `strict: false` запис у marketplace описує все сам, окремий `plugin.json` не потрібен.
-- **Без secrets і absolute paths** у маніфестах. Manifest може називати secret slot, але не містити credential.
+- **`version` controls updates.** If set — an update will only arrive when you change this field (bump it on every release). If `version` is omitted on a git host — **every commit counts as a new version**. For exact pinning — `sha` (full 40-character commit).
+- **`name` is effectively immutable.** Users have the plugin under this slug; renaming breaks installation (`plugin-not-found`).
+  - For the label in the UI — `displayName` (spaces/casing allowed; ≥ 2.1.143).
+  - For an actual rename/removal — the `renames` map (≥ 2.1.193).
+- **Relative paths** are resolved relative to the **repo root** (the directory containing `.claude-plugin/`), not `.claude-plugin/` itself. They must start with `./`. Do not use `../` outside the root.
+  - ⚠️ Relative paths **do not work when served via a direct URL** to `marketplace.json` (only the file itself is downloaded). For URL distribution — a `github`/`git url`/`npm` source.
+  - Optionally, `metadata.pluginRoot: "./plugins"` lets you write `"source": "formatter"` instead of `"./plugins/formatter"`.
+- **Marketplace source ≠ plugin source** — they are pinned independently; a plugin can live in a different repo.
+  - Marketplace source: supports `ref` (branch/tag), **not** `sha`.
+  - Plugin source: supports both `ref` and `sha`. If both are set — `sha` is the effective pin.
+- **Plugin source types:** relative path, `github` (`repo`,`ref?`,`sha?`), `url` (`url`,`ref?`,`sha?`), `git-subdir` (`url`,`path`,`ref?`,`sha?` — sparse clone for monorepos), `npm` (`package`,`version?`,`registry?`).
+- **Plugins are copied into a cache** (`~/.claude/plugins/cache`) — you cannot reference files outside the plugin directory via `../`. For scripts/hooks/MCP — `${CLAUDE_PLUGIN_ROOT}`; for state that survives updates — `${CLAUDE_PLUGIN_DATA}`; for shared files — a symlink.
+- **Reserved names** (not for third parties): `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `claude-plugins-community`, `agent-skills`, `anthropic-*`, and so on, and anything that imitates official sources. Otherwise the marketplace will stop loading.
+- **`strict` (default `true`)** — `plugin.json` is the source of truth for components. With `strict: false`, the marketplace entry describes everything itself, and a separate `plugin.json` is not required.
+- **No secrets and no absolute paths** in manifests. A manifest may name a secret slot, but must not contain the credential.
 
-## 5. Команди валідації та локального тесту
+## 5. Validation and local testing commands
 
 ```bash
-# перевірити структуру/JSON
+# check structure/JSON
 claude plugin validate ./plugins/my-plugin
 claude plugin validate .
 
-# прогнати локально без встановлення в user scope
+# run locally without installing into user scope
 claude --plugin-dir ./plugins/my-plugin
 
-# додати marketplace з локальної теки для тесту
+# add a marketplace from a local directory for testing
 /plugin marketplace add ./path/to/marketplace
 
-# опублікований потік
+# the published flow
 /plugin marketplace add owner/repo
 /plugin install plugin-name@marketplace-name
-/plugin marketplace update      # оновити КАТАЛОГ (список релізів)
-/plugin update plugin@marketplace # оновити ВСТАНОВЛЕНИЙ плагін
+/plugin marketplace update      # update the CATALOG (list of releases)
+/plugin update plugin@marketplace # update an INSTALLED plugin
 ```
-> Schema validation доводить, що маніфест правильної форми. Evals перевіряють поведінку. Одне не замінює інше.
+> Schema validation proves that the manifest has the correct shape. Evals check behavior. One does not replace the other.
 
-## 6. Гарні практики організаційного marketplace (з мережі)
+## 6. Good practices for an organizational marketplace (from the web)
 
-Головне джерело — розбір AutoScout24 (16 плагінів, кілька команд):
+The main source is the AutoScout24 write-up (16 plugins, several teams):
 
-- **Окремий репозиторій від продукту** — різні користувачі, owners і release cadence.
-- **Дворівневе управління:** «автономія на оновлення, governance на додавання». Будь-яка команда відкриває PR до чужого плагіна (рев'ює команда-власник); додання нового плагіна погоджує platform team.
-- **CODEOWNERS на кожен плагін** + catch-all за замовчуванням:
+- **A repository separate from the product** — different users, owners, and release cadence.
+- **Two-tier governance:** "autonomy on updates, governance on additions". Any team opens a PR against another's plugin (reviewed by the owning team); adding a new plugin is approved by the platform team.
+- **CODEOWNERS per plugin** + a catch-all by default:
   ```
   * @org/platform-engineering
   /plugins/jira/ @org/jira-team
   ```
-  Ownership = відповідальність за рев'ю/підтримку, не ексклюзив.
-- **SemVer:** patch — багфікси, minor — нові фічі, major — breaking changes.
-- **Розчепити bump версії від реєстру:** команда міняє `version`/`description` свого плагіна **не чіпаючи** `marketplace.json`. Правку каталогу вимагає лише *додання нового* плагіна. Це фундамент governance-моделі.
-- **Обов'язковий CI-лінтер** (required-check на кожному PR): перевіряє структуру плагіна, консистентність реєстру, конвенції skills, записи CODEOWNERS і version bumps. PR не мержиться без зеленого лінтера, незалежно від апрувів.
-- **`CONTRIBUTING.md` з самого початку:** naming, обов'язкова структура тек, поля `plugin.json`, правила dependencies, заборона secrets/absolute paths, обов'язкові перевірки перед release, правила CHANGELOG, хто рев'ює й хто релізить.
-- **Спочатку дослідження, потім стандартизація** — не переінженерити до появи реальних skills.
-- **Пінити версії, не автооновлювати** зовнішні skills; окремо оновлювати каталог і встановлений плагін.
-- **Портативність:** `SKILL.md` (Markdown + YAML frontmatter) тримати сумісним із кількома агентами.
-- **Dependency graph:** shared skills/agents мають одне canonical source; version constraints зафіксовані; skills/agents із залежних плагінів використовуються з namespace (`engineering-paved-path:react-best-practices`, а не bare `react-best-practices`).
+  Ownership = responsibility for review/support, not exclusivity.
+- **SemVer:** patch — bug fixes, minor — new features, major — breaking changes.
+- **Decouple the version bump from the registry:** a team changes the `version`/`description` of its plugin **without touching** `marketplace.json`. Editing the catalog is only required when *adding a new* plugin. This is the foundation of the governance model.
+- **A mandatory CI linter** (a required check on every PR): validates plugin structure, registry consistency, skill conventions, CODEOWNERS entries, and version bumps. A PR is not merged without a green linter, regardless of approvals.
+- **`CONTRIBUTING.md` from the very start:** naming, the mandatory directory structure, `plugin.json` fields, dependency rules, the ban on secrets/absolute paths, the mandatory checks before a release, CHANGELOG rules, who reviews and who releases.
+- **Research first, then standardize** — don't over-engineer before real skills appear.
+- **Pin versions, don't auto-update** external skills; update the catalog and the installed plugin separately.
+- **Portability:** keep `SKILL.md` (Markdown + YAML frontmatter) compatible with multiple agents.
+- **Dependency graph:** shared skills/agents have a single canonical source; version constraints are fixed; skills/agents from dependent plugins are used with a namespace (`engineering-paved-path:react-best-practices`, not the bare `react-best-practices`).
 
 ---
 
-## 7. Чек-ліст для перевірки ГОТОВОГО репозиторію
+## 7. Checklist for verifying the FINISHED repository
 
-### Структура
-- [ ] `.claude-plugin/marketplace.json` існує в корені репо
-- [ ] Кожен плагін у `plugins/<name>/` має власний `.claude-plugin/plugin.json`
-- [ ] Є `README.md`, `CONTRIBUTING.md`, `CODEOWNERS`
-- [ ] Немає особистих shortcuts/експериментів/локальних правил, що просочилися з домашньої `.claude/`
+### Structure
+- [ ] `.claude-plugin/marketplace.json` exists at the repo root
+- [ ] Each plugin under `plugins/<name>/` has its own `.claude-plugin/plugin.json`
+- [ ] There are `README.md`, `CONTRIBUTING.md`, `CODEOWNERS`
+- [ ] No personal shortcuts/experiments/local rules that leaked in from the home `.claude/`
 
 ### `marketplace.json`
-- [ ] `name` — kebab-case, без пробілів, НЕ з reserved-списку
-- [ ] `owner.name` заданий
-- [ ] Кожен запис `plugins[]` має `name` + `source`
-- [ ] Відносні `source` починаються з `./` і не виходять за корінь
-- [ ] (Якщо URL-дистрибуція) source не відносний, а `github`/`git`/`npm`
+- [ ] `name` — kebab-case, no spaces, NOT from the reserved list
+- [ ] `owner.name` is set
+- [ ] Each `plugins[]` entry has `name` + `source`
+- [ ] Relative `source` values start with `./` and don't go outside the root
+- [ ] (If URL distribution) the source is not relative, but `github`/`git`/`npm`
 
-### `plugin.json` (для кожного плагіна)
-- [ ] `name`, `version`, `description` присутні
-- [ ] `name` збігається зі slug у marketplace та не мінявся після публікації
-- [ ] `repository` — рядок-URL, а не об'єкт
-- [ ] `version` бампнутий на кожному релізі (SemVer)
-- [ ] Немає secrets і absolute paths; скрипти через `${CLAUDE_PLUGIN_ROOT}`
-- [ ] Немає посилань `../` за межі теки плагіна
-- [ ] Skill/agent references — з plugin namespace, де є залежності
+### `plugin.json` (for each plugin)
+- [ ] `name`, `version`, `description` are present
+- [ ] `name` matches the slug in the marketplace and has not changed since publication
+- [ ] `repository` is a string URL, not an object
+- [ ] `version` is bumped on every release (SemVer)
+- [ ] No secrets and no absolute paths; scripts via `${CLAUDE_PLUGIN_ROOT}`
+- [ ] No `../` references outside the plugin directory
+- [ ] Skill/agent references use the plugin namespace where there are dependencies
 
 ### Governance
-- [ ] `CODEOWNERS`: catch-all + per-plugin шляхи
-- [ ] `CONTRIBUTING.md` описує структуру, перевірки, review і release process
-- [ ] CI-лінтер як required-check (структура, реєстр, CODEOWNERS, version bumps)
-- [ ] Marketplace живе в окремому репо від продукту
+- [ ] `CODEOWNERS`: catch-all + per-plugin paths
+- [ ] `CONTRIBUTING.md` describes the structure, checks, review and release process
+- [ ] CI linter as a required check (structure, registry, CODEOWNERS, version bumps)
+- [ ] The marketplace lives in a repo separate from the product
 
-### Валідація/поведінка
-- [ ] `claude plugin validate .` — зелений
-- [ ] `claude plugin validate ./plugins/<name>` — зелений для кожного
-- [ ] Локальний прогін `--plugin-dir` працює
-- [ ] Evals: активація на релевантному сценарії, namespace без missing-skill warnings, відсутність активації на нерелевантному запиті
-- [ ] Встановлення в інший наявний project проходить; installer показує dependency graph до підтвердження
-- [ ] У trace видно правильну version плагіна й resolved versions залежностей
-- [ ] `marketplace update` vs `plugin update` розділені й документовані
+### Validation/behavior
+- [ ] `claude plugin validate .` — green
+- [ ] `claude plugin validate ./plugins/<name>` — green for each one
+- [ ] A local run with `--plugin-dir` works
+- [ ] Evals: activation on a relevant scenario, namespace without missing-skill warnings, no activation on an irrelevant request
+- [ ] Installation into another existing project succeeds; the installer shows the dependency graph before confirmation
+- [ ] The trace shows the correct plugin version and the resolved versions of dependencies
+- [ ] `marketplace update` vs `plugin update` are separated and documented
 
 ---
 
-## 8. Джерела
+## 8. Sources
 
-- [Create and distribute a plugin marketplace — Claude Code Docs](https://code.claude.com/docs/en/plugin-marketplaces) — первинне джерело правил
-- [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) — офіційний приклад каталогу
-- [ivan-magda/claude-code-plugin-template](https://github.com/ivan-magda/claude-code-plugin-template) — готовий GitHub-шаблон
+- [Create and distribute a plugin marketplace — Claude Code Docs](https://code.claude.com/docs/en/plugin-marketplaces) — the primary source of rules
+- [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) — the official example catalog
+- [ivan-magda/claude-code-plugin-template](https://github.com/ivan-magda/claude-code-plugin-template) — a ready-made GitHub template
 - [AutoScout24 — Designing a Coding Agent Skills Marketplace](https://tech.autoscout24.com/blog/posts/designing-a-coding-agent-skills-marketplace/) — organizational best practices
-- [Build Your Own Claude Code Marketplace (dev.to / nagell)](https://dev.to/nagell/build-your-own-claude-code-marketplace-scaffold-structure-and-auto-updates-4n3f) — практичний walkthrough
-- [Dominic Böttger — Private Claude Code Plugin Marketplace](https://dominic-boettger.com/blog/claude-code-private-plugin-marketplace-guide/) — приватний тимовий marketplace
-- [JFrog — Agent Skills are the New Packages of AI](https://jfrog.com/blog/agent-skills-new-ai-packages/) — безпека/версіонування
-- [Chris Ayers — Agent Skills, Plugins and Marketplace: The Complete Guide](https://chris-ayers.com/posts/agent-skills-plugins-marketplace/) — повний гайд
+- [Build Your Own Claude Code Marketplace (dev.to / nagell)](https://dev.to/nagell/build-your-own-claude-code-marketplace-scaffold-structure-and-auto-updates-4n3f) — a practical walkthrough
+- [Dominic Böttger — Private Claude Code Plugin Marketplace](https://dominic-boettger.com/blog/claude-code-private-plugin-marketplace-guide/) — a private team marketplace
+- [JFrog — Agent Skills are the New Packages of AI](https://jfrog.com/blog/agent-skills-new-ai-packages/) — security/versioning
+- [Chris Ayers — Agent Skills, Plugins and Marketplace: The Complete Guide](https://chris-ayers.com/posts/agent-skills-plugins-marketplace/) — a complete guide
