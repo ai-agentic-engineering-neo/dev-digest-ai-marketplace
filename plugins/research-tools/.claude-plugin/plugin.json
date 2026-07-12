@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "research-tools",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Read-only research agent that locates, gathers, and fact-checks information from the codebase or the public web and returns it in a structured format. Never edits files.",
   "author": { "name": "DevDigest AI Engineering" },
   "repository": "https://github.com/burnjohn/dev-digest-ai-marketplace",
