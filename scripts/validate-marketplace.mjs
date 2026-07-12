@@ -123,9 +123,26 @@ const SECRET_RULES = [
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, 'private key'],
   [/\bAKIA[0-9A-Z]{16}\b/, 'AWS access key id'],
   [/\bghp_[A-Za-z0-9]{20,}\b/, 'GitHub token'],
-  [/\b(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*['"]?[A-Za-z0-9_\-\/+]{8,}/i, 'hardcoded credential'],
 ];
+// Generic key/value credential rule. Requires a QUOTED literal value — an
+// unquoted right-hand side is a variable or expression (e.g.
+// `password: hashedPassword`, `token = cookieStore.get(...)`), not a secret.
+// Obvious example/dummy values are skipped, since best-practice skill docs
+// legitimately carry sample credentials. High-signal provider tokens above stay strict.
+const CRED_RE = /\b(password|passwd|secret|token|api[_-]?key)\b\s*[:=]\s*(['"])([^'"]{6,})\2/i;
 const PLACEHOLDER = /(\$\{?[A-Za-z_]|<[^>]+>|YOUR_|xxxx|example|placeholder|\.\.\.)/i;
+
+// Is a quoted credential value an obvious example rather than a real secret?
+// Real leaked secrets/keys are long and high-entropy (and provider tokens are
+// caught by the strict rules above); doc examples are short words, word+digits,
+// or plain numbers. This keeps the generic rule quiet on best-practice skill docs.
+function isDummyCredential(v) {
+  if (/^\d+$/.test(v)) return true;                        // 12345678
+  if (/^[a-z][a-z-]{0,14}$/.test(v)) return true;          // hidden, changeme
+  if (/^[a-z]+[-_]?\d+$/i.test(v)) return true;            // secret123, password_1
+  if (/^(password|passwd|secret|token|changeme|example|sample|dummy|test|placeholder|redacted|your|foo|bar|hunter2)/i.test(v)) return true;
+  return false;
+}
 const ABS_PATH = [/\/Users\//, /\/home\/[a-z]/, /[A-Za-z]:\\\\/];
 const TEXT_EXT = new Set(['.md', '.json', '.js', '.mjs', '.ts', '.sh', '.yml', '.yaml', '.txt', '.py', '']);
 
@@ -148,6 +165,9 @@ function walk(dir) {
     content.split('\n').forEach((line, n) => {
       for (const [re, label] of SECRET_RULES)
         if (re.test(line) && !PLACEHOLDER.test(line)) err(`${rel}:${n + 1}: possible ${label}`);
+      const cred = line.match(CRED_RE);
+      if (cred && !PLACEHOLDER.test(line) && !isDummyCredential(cred[3]))
+        err(`${rel}:${n + 1}: possible hardcoded credential`);
       for (const re of ABS_PATH)
         if (re.test(line)) err(`${rel}:${n + 1}: absolute path (use \${CLAUDE_PLUGIN_ROOT})`);
     });
