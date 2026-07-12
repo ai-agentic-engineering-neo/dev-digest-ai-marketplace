@@ -1,0 +1,41 @@
+name: Build catalog site
+
+# Окремий статус-чек саме для збірки сайту — навмисно НЕ змішаний із
+# "Validate marketplace" (harness/marketplace-перевірки в validate.yml).
+# Тільки будує (індекс + Vite), без деплою. Деплой робить pages.yml на push у main.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'plugins/**'
+      - 'scripts/build-index.mjs'
+      - 'site/**'
+      - '.github/workflows/site-build.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install deps
+        working-directory: site
+        run: npm ci
+
+      - name: Build index from plugins/**
+        run: node scripts/build-index.mjs
+
+      - name: Vite build (no deploy)
+        working-directory: site
+        run: npm run build

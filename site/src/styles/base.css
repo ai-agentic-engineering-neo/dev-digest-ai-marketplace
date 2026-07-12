@@ -1,0 +1,54 @@
+@import './theme.css';
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+#root { min-height: 100vh; }
+
+.app {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::selection { background: color-mix(in oklab, var(--accent) 40%, transparent); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+input, button, select { font-family: inherit; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+mark {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+  color: inherit;
+  border-radius: 2px;
+}
+
+button { color: inherit; }
+
+.card-hover { transition: border-color 0.15s, background 0.15s; }
+.card-hover:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+
+@keyframes pop { from { transform: translateY(8px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Markdown body rendered in detail views */
+.md :is(h1, h2, h3) { line-height: 1.25; margin: 1.2em 0 0.5em; }
+.md p { margin: 0 0 0.9em; color: var(--text-dim); line-height: 1.65; }
+.md ul, .md ol { color: var(--text-dim); padding-left: 1.3em; }
+.md li { margin: 0.2em 0; }
+.md code {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.9em;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.1em 0.35em;
+}
+.md pre {
+  background: #000; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; overflow: auto;
+}
+.md pre code { background: none; border: none; color: #cfe; padding: 0; }
+.md a { color: var(--accent); }
