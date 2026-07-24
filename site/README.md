@@ -1,46 +1,48 @@
-# site/ — каталог marketplace (React + Vite)
+# site/ — marketplace catalog (React + Vite)
 
-Вебдодаток каталогу: пошук, detail-view, command palette (⌘K), what's new, stats,
-getting-started, темна/світла тема. Живе в окремій директорії, щоб не змішуватися
-зі структурою плагінів (`plugins/`, `docs/`, `scripts/`). Реалізує `docs/SITE-SPEC.md`.
+The catalog web app: search, detail view, command palette (⌘K), what's new, stats,
+getting-started, dark/light theme. It lives in its own directory so it doesn't mix
+with the plugin layout (`plugins/`, `docs/`, `scripts/`). It implements `docs/SITE-SPEC.md`.
 
-## Як це працює
+## How it works
 
-**Статичний індекс + клієнтський пошук.** GitHub Pages роздає лише статику, тому:
+**Static index + client-side search.** GitHub Pages serves static files only, so:
 
-1. `scripts/build-index.mjs` (zero-dep Node) на етапі білду обходить `plugins/**`,
-   парсить маніфести + frontmatter + CHANGELOG і генерує в `public/`:
+1. `scripts/build-index.mjs` (zero-dep Node) walks `plugins/**` at build time,
+   parses manifests + frontmatter + CHANGELOG, and generates into `public/`:
    `index.json`, `releases.json`, `stats.json`, `bodies/<id>.md`.
-2. Браузер вантажить готовий `index.json` і шукає клієнтськи (MiniSearch, fuzzy).
+2. The browser loads the prebuilt `index.json` and searches client-side (MiniSearch, fuzzy).
 
-**Реіндексація автоматична** — на кожен push у `main`, що зачіпає `plugins/**`,
-workflow `pages.yml` перебудовує індекс і редеплоїть сайт. Вручну: `npm run build:index`.
+**Reindexing is automatic** — on every push to `main` touching `plugins/**`, the
+`pages.yml` workflow rebuilds the index and redeploys. Manually: `npm run build:index`.
 
-Згенеровані файли (`public/*.json`, `public/bodies/`, `dist/`) — у `.gitignore`,
-у репо не комітяться; вони існують лише як build-артефакт.
+Generated files (`public/*.json`, `public/bodies/`, `dist/`) are git-ignored — they
+are never committed; they exist only as build artifacts.
 
-## Скрипти
+## Scripts
 
-| Команда | Що робить |
+| Command | What it does |
 | --- | --- |
-| `npm run dev` | Dev-сервер Vite на http://localhost:5173/ (спершу будує індекс). |
+| `npm run dev` | Vite dev server at http://localhost:5173/ (builds the index first). |
 | `npm run build` | Type-check + `build:index` + `vite build` → `dist/`. |
-| `npm run preview` | Локальний перегляд продакшн-збірки (перевірка base path). |
-| `npm run build:index` | Тільки перебудувати `public/*.json` з `plugins/**`. |
+| `npm run preview` | Preview the production build locally (base-path check). |
+| `npm run build:index` | Only rebuild `public/*.json` from `plugins/**`. |
 
-## Стек
+## Stack
 
-React 18 + TypeScript + Vite. Пошук — MiniSearch (за інтерфейсом `SearchProvider`,
-щоб додати семантику пізніше). Роутинг — власний hash-router (deep-links працюють на
-статиці). Markdown detail — `marked` + `DOMPurify` (sanitize), у lazy-чанку. Тексти
-UI — в одному файлі `src/i18n/uk.ts` (не хардкодяться в компонентах).
+React 18 + TypeScript + Vite. Search — MiniSearch (behind a `SearchProvider`
+interface, so semantic search can be added later). Routing — a small custom hash
+router (deep links work on static hosting). Markdown detail — `marked` + `DOMPurify`
+(sanitized), in a lazy chunk. All UI copy lives in `src/i18n/` (never hardcoded in
+components).
 
-## Хостинг (GitHub Pages)
+## Hosting (GitHub Pages)
 
-Деплой автоматичний через `.github/workflows/pages.yml` (build → `dist/` → Pages).
-PR перевіряється окремим workflow `.github/workflows/site-build.yml` (build без деплою).
+Deployment is automatic via `.github/workflows/pages.yml` (build → `dist/` → Pages).
+Pull requests are checked by a separate workflow, `.github/workflows/site-build.yml`
+(build, no deploy).
 
-**Одноразово:** Settings → Pages → Source: **GitHub Actions**.
+**One-time setup:** Settings → Pages → Source: **GitHub Actions**.
 URL: `https://burnjohn.github.io/dev-digest-ai-marketplace/`
 
-Джерело дизайну: <https://claude.ai/design/p/f70daf28-7cac-42fb-a15f-9d364d9d2186>
+Design source: <https://claude.ai/design/p/f70daf28-7cac-42fb-a15f-9d364d9d2186>
