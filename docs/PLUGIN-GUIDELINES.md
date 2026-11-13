@@ -46,7 +46,7 @@ Example:
 ```json
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "engineering-paved-path",
+  "name": "engineering-practices",
   "version": "1.0.0",
   "description": "Shared engineering skills for the team.",
   "author": { "name": "DevDigest AI Engineering" },
@@ -62,8 +62,8 @@ Example:
 
 ## Cross-plugin dependencies
 
-- Extract shared skills/agents into a single canonical source (e.g. `engineering-paved-path`) rather than duplicating them.
-- Reference dependency components **namespaced**: `engineering-paved-path:react-best-practices`, `research-tools:researcher`. Replace bare names with namespaced ones during extraction.
+- Extract shared skills/agents into a single canonical source (e.g. `engineering-practices`) rather than duplicating them.
+- Reference dependency components **namespaced**: `engineering-practices:react-best-practices`, `research-tools:researcher`. Replace bare names with namespaced ones during extraction.
 - Pin dependency versions with constraints (e.g. `^1.0.0`) so the installer can show the full dependency graph before confirmation.
 
 ## Before a PR

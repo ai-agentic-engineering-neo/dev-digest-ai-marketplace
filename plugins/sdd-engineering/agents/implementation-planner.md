@@ -4,18 +4,18 @@ description: Use proactively when an agreed set of requirements (a spec, ticket,
 model: opus
 tools: Read, Glob, Grep, Bash, Agent, Write
 skills:
-  - engineering-paved-path:onion-architecture       # backend layering
-  - engineering-paved-path:fastify-best-practices   # backend (if Fastify)
-  - engineering-paved-path:drizzle-orm-patterns     # backend (if Drizzle)
-  - engineering-paved-path:postgresql-table-design  # backend (if Postgres)
-  - engineering-paved-path:zod                      # backend + core
-  - engineering-paved-path:frontend-architecture    # ui
-  - engineering-paved-path:next-best-practices      # ui (if Next.js)
-  - engineering-paved-path:react-best-practices     # ui (if React)
-  - engineering-paved-path:react-testing-library    # ui
-  - engineering-paved-path:typescript-expert        # core + always
-  - engineering-paved-path:security                 # always
-  - engineering-paved-path:mermaid-diagram          # plan diagrams
+  - engineering-practices:onion-architecture       # backend layering
+  - engineering-practices:fastify-best-practices   # backend (if Fastify)
+  - engineering-practices:drizzle-orm-patterns     # backend (if Drizzle)
+  - engineering-practices:postgresql-table-design  # backend (if Postgres)
+  - engineering-practices:zod                      # backend + core
+  - engineering-practices:frontend-architecture    # ui
+  - engineering-practices:next-best-practices      # ui (if Next.js)
+  - engineering-practices:react-best-practices     # ui (if React)
+  - engineering-practices:react-testing-library    # ui
+  - engineering-practices:typescript-expert        # core + always
+  - engineering-practices:security                 # always
+  - engineering-practices:mermaid-diagram          # plan diagrams
 ---
 
 # Implementation Planner

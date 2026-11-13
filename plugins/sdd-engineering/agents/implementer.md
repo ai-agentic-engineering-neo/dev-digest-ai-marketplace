@@ -4,17 +4,17 @@ description: Use proactively to implement ONE task/slice from an Implementation 
 model: sonnet
 tools: Read, Glob, Grep, Edit, Write, Bash, Skill, Agent
 skills:
-  - engineering-paved-path:onion-architecture       # backend layering
-  - engineering-paved-path:fastify-best-practices   # backend (if Fastify)
-  - engineering-paved-path:drizzle-orm-patterns     # backend (if Drizzle)
-  - engineering-paved-path:postgresql-table-design  # backend (if Postgres)
-  - engineering-paved-path:zod                      # backend + core
-  - engineering-paved-path:frontend-architecture    # ui
-  - engineering-paved-path:next-best-practices      # ui (if Next.js)
-  - engineering-paved-path:react-best-practices     # ui (if React)
-  - engineering-paved-path:react-testing-library    # ui
-  - engineering-paved-path:typescript-expert        # core + always
-  - engineering-paved-path:security                 # always
+  - engineering-practices:onion-architecture       # backend layering
+  - engineering-practices:fastify-best-practices   # backend (if Fastify)
+  - engineering-practices:drizzle-orm-patterns     # backend (if Drizzle)
+  - engineering-practices:postgresql-table-design  # backend (if Postgres)
+  - engineering-practices:zod                      # backend + core
+  - engineering-practices:frontend-architecture    # ui
+  - engineering-practices:next-best-practices      # ui (if Next.js)
+  - engineering-practices:react-best-practices     # ui (if React)
+  - engineering-practices:react-testing-library    # ui
+  - engineering-practices:typescript-expert        # core + always
+  - engineering-practices:security                 # always
 ---
 
 # Implementer
@@ -55,7 +55,7 @@ do not edit those.
 
 2. **Apply the skill set for your `Type`.** Everything is preloaded; lean on the relevant emphasis:
    - **backend** → fastify-best-practices · drizzle-orm-patterns · postgresql-table-design · zod ·
-     onion-architecture · security  *(all namespaced under `engineering-paved-path:`; drop any that
+     onion-architecture · security  *(all namespaced under `engineering-practices:`; drop any that
      don't match your stack)*
    - **ui** → next-best-practices · react-best-practices · react-testing-library ·
      frontend-architecture · security

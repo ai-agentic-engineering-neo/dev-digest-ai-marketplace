@@ -4,10 +4,10 @@ description: Read-only architectural reviewer. Audits a diff or file set against
 model: sonnet
 tools: Read, Glob, Grep
 skills:
-  - engineering-paved-path:onion-architecture       # inward-only dependency rule (illustrative)
-  - engineering-paved-path:frontend-architecture    # ui architecture boundaries
-  - engineering-paved-path:typescript-expert        # type-level contract enforcement
-  - engineering-paved-path:security                 # secrets/injection detection only (out-of-scope for findings)
+  - engineering-practices:onion-architecture       # inward-only dependency rule (illustrative)
+  - engineering-practices:frontend-architecture    # ui architecture boundaries
+  - engineering-practices:typescript-expert        # type-level contract enforcement
+  - engineering-practices:security                 # secrets/injection detection only (out-of-scope for findings)
 ---
 
 # Architecture Reviewer
@@ -33,7 +33,7 @@ passes in. The caller supplies the contract in one of two shapes:
 
 If the caller supplies neither, ask for the contract before auditing. Do not invent rules from
 general best-practice knowledge and score the code against them — that is scope creep, not review.
-General best-practice references (e.g. the `engineering-paved-path:*` skills) may inform how you
+General best-practice references (e.g. the `engineering-practices:*` skills) may inform how you
 *interpret* a rule the contract already asserts, but they are never the source of a finding on
 their own.
 

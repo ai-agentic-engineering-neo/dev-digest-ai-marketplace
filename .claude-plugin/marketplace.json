@@ -9,8 +9,8 @@
   },
   "plugins": [
     {
-      "name": "engineering-paved-path",
-      "source": "./plugins/engineering-paved-path",
+      "name": "engineering-practices",
+      "source": "./plugins/engineering-practices",
       "description": "Shared engineering best-practice skills: React, Next.js, Fastify, testing, security, architecture, and full-stack foundations.",
       "category": "development"
     },
@@ -32,5 +32,8 @@
       "description": "Spec-Driven Development workflow: spec, plan, implement, verify, retro. Depends on the three plugins above.",
       "category": "workflow"
     }
-  ]
+  ],
+  "renames": {
+    "engineering-paved-path": "engineering-practices"
+  }
 }

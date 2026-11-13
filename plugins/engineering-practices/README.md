@@ -1,4 +1,4 @@
-# engineering-paved-path
+# engineering-practices
 
 A curated set of 12 project-agnostic engineering skills for Claude Code — the "paved path" for building TypeScript-first full-stack applications. Skills cover React/Next.js frontend, Fastify/Drizzle/Postgres backend, cross-cutting concerns (TypeScript, Zod, security, onion architecture), and one shared diagramming skill. This plugin is the **shared foundation** that the other plugins in the `dev-digest-ai-marketplace` (`architecture-review`, `sdd-engineering`) depend on.
 
@@ -36,7 +36,7 @@ A curated set of 12 project-agnostic engineering skills for Claude Code — the 
 
 ```
 /plugin marketplace add burnjohn/dev-digest-ai-marketplace
-/plugin install engineering-paved-path@dev-digest-ai-marketplace
+/plugin install engineering-practices@dev-digest-ai-marketplace
 ```
 
 ## How skills activate
@@ -46,14 +46,14 @@ Skills load **on-demand**: Claude Code inspects each skill's `SKILL.md` frontmat
 To invoke explicitly, reference the skill by its fully-qualified name:
 
 ```
-Use the engineering-paved-path:onion-architecture skill to place this new module.
+Use the engineering-practices:onion-architecture skill to place this new module.
 ```
 
-All skills in this plugin are addressable as `engineering-paved-path:<skill>`. That namespace matters when another plugin depends on this one — e.g. `architecture-review` and `sdd-engineering` reference these skills by their qualified names.
+All skills in this plugin are addressable as `engineering-practices:<skill>`. That namespace matters when another plugin depends on this one — e.g. `architecture-review` and `sdd-engineering` reference these skills by their qualified names.
 
 ## Dependency role
 
-This plugin has **no dependencies of its own** and is designed to be depended on. If you install one of the review/spec plugins from this marketplace, `engineering-paved-path` will be pulled in as a peer dependency.
+This plugin has **no dependencies of its own** and is designed to be depended on. If you install one of the review/spec plugins from this marketplace, `engineering-practices` will be pulled in as a peer dependency.
 
 ## Per-skill docs
 

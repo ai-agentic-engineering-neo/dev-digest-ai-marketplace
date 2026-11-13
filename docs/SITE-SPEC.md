@@ -101,7 +101,7 @@ One index record = one searchable artifact. The type is set by the `kind` field.
 | `author` | {name, email?} | author |
 | `installCommand` | string | `/plugin install <name>@dev-digest-ai-marketplace` |
 | `components` | {skills, agents, commands, hooks, mcp: number} | counters for the card |
-| `dependencies` | string[] | namespaced deps (e.g. `engineering-paved-path:react-best-practices`) |
+| `dependencies` | string[] | namespaced deps (e.g. `engineering-practices:react-best-practices`) |
 | `compatibility` | string? | condensed from `COMPATIBILITY.md` (e.g. min. Claude Code version) |
 | `changelog` | {version, date?, summary}[] | parsed `CHANGELOG.md` |
 | `sourceType` | enum | `path` \| `github` \| `url` \| `git-subdir` \| `npm` (from `marketplace.json`) |

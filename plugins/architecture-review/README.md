@@ -72,12 +72,12 @@ The verdict includes a merge gate: **PASS** requires zero `critical` and zero `h
 ## Namespacing
 
 - Agent name: **`architecture-review:architecture-reviewer`**
-- The plugin depends on **`engineering-paved-path ^1.0.0`** for the reusable engineering skills the
-  agent references (namespaced as `engineering-paved-path:<skill>`):
-  - `engineering-paved-path:onion-architecture` — illustrative inward-only dependency rule
-  - `engineering-paved-path:frontend-architecture` — UI architecture boundaries
-  - `engineering-paved-path:typescript-expert` — type-level contract enforcement
-  - `engineering-paved-path:security` — detection only; security findings are out-of-scope for this
+- The plugin depends on **`engineering-practices ^1.0.0`** for the reusable engineering skills the
+  agent references (namespaced as `engineering-practices:<skill>`):
+  - `engineering-practices:onion-architecture` — illustrative inward-only dependency rule
+  - `engineering-practices:frontend-architecture` — UI architecture boundaries
+  - `engineering-practices:typescript-expert` — type-level contract enforcement
+  - `engineering-practices:security` — detection only; security findings are out-of-scope for this
     reviewer and are surfaced in the verdict, not as findings
 
 These skills inform *how* the agent interprets a contract clause; they are never the source of a

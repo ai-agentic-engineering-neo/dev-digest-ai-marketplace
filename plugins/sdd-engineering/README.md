@@ -79,11 +79,11 @@ and `plan-verifier` (internal to this plugin).
 
 This plugin composes three sibling plugins from the same marketplace:
 
-- **`engineering-paved-path`** — best-practice skills preloaded into the agents' `skills:`
-  frontmatter (e.g. `engineering-paved-path:onion-architecture`,
-  `engineering-paved-path:react-best-practices`, `engineering-paved-path:zod`,
-  `engineering-paved-path:security`, `engineering-paved-path:typescript-expert`,
-  `engineering-paved-path:mermaid-diagram`, …). Skills that don't apply to a task's stack are
+- **`engineering-practices`** — best-practice skills preloaded into the agents' `skills:`
+  frontmatter (e.g. `engineering-practices:onion-architecture`,
+  `engineering-practices:react-best-practices`, `engineering-practices:zod`,
+  `engineering-practices:security`, `engineering-practices:typescript-expert`,
+  `engineering-practices:mermaid-diagram`, …). Skills that don't apply to a task's stack are
   harmless — the agent ignores them.
 - **`research-tools`** — the `research-tools:researcher` agent, invoked by `spec-creator` and
   `implementation-planner` for read-only discovery so raw exploration stays out of their context.

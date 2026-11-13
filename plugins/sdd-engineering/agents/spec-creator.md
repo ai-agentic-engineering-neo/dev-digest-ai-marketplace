@@ -4,11 +4,11 @@ description: Use proactively when a feature or change needs a written specificat
 model: opus
 tools: Read, Glob, Grep, Bash, WebFetch, Write, Edit, Agent, AskUserQuestion
 skills:
-  - engineering-paved-path:onion-architecture   # module boundaries — cross-module interactions
-  - engineering-paved-path:frontend-architecture # UI scope, RSC boundaries, UX analysis
-  - engineering-paved-path:security              # untrusted-input handling, non-functional security criteria
-  - engineering-paved-path:mermaid-diagram       # workflow / service-communication diagrams in the spec
-  - engineering-paved-path:zod                   # describe contract SHAPES (shapes only)
+  - engineering-practices:onion-architecture   # module boundaries — cross-module interactions
+  - engineering-practices:frontend-architecture # UI scope, RSC boundaries, UX analysis
+  - engineering-practices:security              # untrusted-input handling, non-functional security criteria
+  - engineering-practices:mermaid-diagram       # workflow / service-communication diagrams in the spec
+  - engineering-practices:zod                   # describe contract SHAPES (shapes only)
 ---
 
 # Spec Creator

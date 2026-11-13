@@ -1,6 +1,12 @@
 # Changelog
 
-All notable changes to `engineering-paved-path` are documented here. Versioning follows [SemVer](https://semver.org/).
+All notable changes to `engineering-practices` (formerly `engineering-paved-path`) are documented here. Versioning follows [SemVer](https://semver.org/).
+
+## 1.0.1 — 2026-11-13
+
+### Changed
+- Renamed from `engineering-paved-path` to `engineering-practices`. Skills are now addressed as `engineering-practices:<skill>`; their content is unchanged.
+- `marketplace.json` maps the old name via `renames`, so existing installs migrate automatically. Users of a git-hosted marketplace run `/plugin install engineering-practices@dev-digest-ai-marketplace` once.
 
 ## 1.0.0 — 2026-07-12
 

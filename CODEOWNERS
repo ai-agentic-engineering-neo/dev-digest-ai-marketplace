@@ -5,5 +5,5 @@
 # Per-plugin owners are added when each plugin is added.
 # Ownership = responsibility for review and maintenance, not exclusivity.
 # Example:
-# /plugins/engineering-paved-path/ @burnjohn
+# /plugins/engineering-practices/ @burnjohn
 # /plugins/research-tools/         @some-team

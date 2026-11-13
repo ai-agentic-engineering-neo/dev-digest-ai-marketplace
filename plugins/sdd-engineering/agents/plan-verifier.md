@@ -4,9 +4,9 @@ description: Read-only requirements-completion checker. Use after a feature is c
 model: sonnet
 tools: Read, Glob, Grep, Bash
 skills:
-  - engineering-paved-path:typescript-expert       # locate TypeScript artifacts
-  - engineering-paved-path:onion-architecture      # identify where backend artifacts should live
-  - engineering-paved-path:frontend-architecture   # locate UI artifacts (components, hooks, routes)
+  - engineering-practices:typescript-expert       # locate TypeScript artifacts
+  - engineering-practices:onion-architecture      # identify where backend artifacts should live
+  - engineering-practices:frontend-architecture   # locate UI artifacts (components, hooks, routes)
 ---
 
 # Plan Verifier

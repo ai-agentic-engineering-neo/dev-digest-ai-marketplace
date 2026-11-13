@@ -22,7 +22,7 @@ Required `plugin.json` fields: `name`, `version` (SemVer), `description`. `repos
 ## Dependencies
 
 - Shared skills/agents have a single canonical source; pin dependency versions with constraints.
-- Reference components from dependency plugins with a **namespace** (`engineering-paved-path:react-best-practices`, not bare `react-best-practices`).
+- Reference components from dependency plugins with a **namespace** (`engineering-practices:react-best-practices`, not bare `react-best-practices`).
 
 ## Contribution steps
 

@@ -14,15 +14,15 @@ We extract **four** plugins. Three are reusable **dependencies** (each supplies 
 
 | Plugin | Role | Provides |
 | --- | --- | --- |
-| `engineering-paved-path` | dependency | shared engineering skills (React, Next.js, Fastify, architecture, testing, security) |
+| `engineering-practices` | dependency | shared engineering skills (React, Next.js, Fastify, architecture, testing, security) |
 | `research-tools` | dependency | the read-only `researcher` agent |
 | `architecture-review` | dependency | a generalized `architecture-reviewer` agent |
 | `sdd-engineering` | consumer | 4 agents + the `run-plan` and `workflow-retro` skills; depends on the three above at `^1.0.0` |
 
-**Dependency graph** (a DAG, not a star — `architecture-review` also builds on `engineering-paved-path`):
+**Dependency graph** (a DAG, not a star — `architecture-review` also builds on `engineering-practices`):
 
 ```
-sdd-engineering  ──depends^1.0.0──▶  engineering-paved-path ◀─┐
+sdd-engineering  ──depends^1.0.0──▶  engineering-practices ◀─┐
                  ──depends^1.0.0──▶  research-tools           │
                  ──depends^1.0.0──▶  architecture-review ──depends^1.0.0┘
 ```
@@ -38,7 +38,7 @@ Full visualization — [`DEPENDENCY-GRAPH.md`](./DEPENDENCY-GRAPH.md).
 
 ## 2. Dependency plugins
 
-### 2.1 `engineering-paved-path`
+### 2.1 `engineering-practices`
 
 The single canonical source for shared engineering skills — so we don't duplicate them in every plugin. These are the engineering skills from `.claude/skills/`, grouped by layer of the stack:
 
@@ -53,7 +53,7 @@ The single canonical source for shared engineering skills — so we don't duplic
 | full-stack foundations | `typescript-expert`, `zod`, `drizzle-orm-patterns`, `postgresql-table-design` |
 
 ```
-plugins/engineering-paved-path/
+plugins/engineering-practices/
 ├── .claude-plugin/plugin.json
 ├── skills/
 │   ├── react-best-practices/SKILL.md
@@ -97,11 +97,11 @@ Provides a **generalized** `architecture-reviewer` agent. In the source, `archit
 - Drop the DevDigest-specific paths and invariants; replace them with explicit inputs/config (the set of structural rules is passed to the agent, not hardcoded).
 - Keep the read-only guarantee and the output format (severity + traceability).
 
-**Dependency:** the agent itself leans on architecture/security/testing best practices, so the plugin declares a dependency on `engineering-paved-path ^1.0.0` and references its skills namespaced.
+**Dependency:** the agent itself leans on architecture/security/testing best practices, so the plugin declares a dependency on `engineering-practices ^1.0.0` and references its skills namespaced.
 
 ```
 plugins/architecture-review/
-├── .claude-plugin/plugin.json        # dependencies: [engineering-paved-path ^1.0.0]
+├── .claude-plugin/plugin.json        # dependencies: [engineering-practices ^1.0.0]
 ├── agents/architecture-reviewer.md   # tools: Read, Glob, Grep — read-only
 ├── README.md
 ├── CHANGELOG.md
@@ -166,7 +166,7 @@ spec-creator ─▶ implementation-planner ─▶ [human APPROVES the plan]
   - `run-plan`: `docs/plans/<x>.md` and the git baseline `origin/main` → skill parameters.
   - `spec-creator`: `server/`/`client/`/`reviewer-core/`, `insights/gotchas.md`, `groundFindings()`/`wrapUntrusted()` → explicit inputs.
   - `architecture-reviewer`: see §2.3 (generalization).
-- **Reference skills namespaced**: `engineering-paved-path:react-best-practices`, `research-tools:researcher`, `architecture-review:architecture-reviewer` — not bare names.
+- **Reference skills namespaced**: `engineering-practices:react-best-practices`, `research-tools:researcher`, `architecture-review:architecture-reviewer` — not bare names.
 - **Supporting scripts via `${CLAUDE_SKILL_DIR}`.** Concretely: `workflow-retro/SKILL.md` in the source hardcodes `.claude/skills/workflow-retro/scripts/analyze_journals.py` — this must become `${CLAUDE_SKILL_DIR}/scripts/analyze_journals.py`. Scripts/hooks/MCP at the plugin level use `${CLAUDE_PLUGIN_ROOT}`. No `../` outside the plugin directory.
 - **Port evals alongside** and update them whenever behavior changes.
 
@@ -183,7 +183,7 @@ Add **four** entries to the root `.claude-plugin/marketplace.json`. Each entry h
   "owner": { "name": "DevDigest AI Engineering" },
   "metadata": { "pluginRoot": "./plugins" },
   "plugins": [
-    { "name": "engineering-paved-path", "source": "./plugins/engineering-paved-path" },
+    { "name": "engineering-practices", "source": "./plugins/engineering-practices" },
     { "name": "research-tools",         "source": "./plugins/research-tools" },
     { "name": "architecture-review",    "source": "./plugins/architecture-review" },
     { "name": "sdd-engineering",        "source": "./plugins/sdd-engineering" }
@@ -201,7 +201,7 @@ The `dependencies` field in `plugin.json` is an **array** (string entries or `{ 
   "description": "Spec-Driven Development workflow: spec → plan → implement → verify → retro.",
   "author": { "name": "DevDigest AI Engineering" },
   "dependencies": [
-    { "name": "engineering-paved-path", "version": "^1.0.0" },
+    { "name": "engineering-practices", "version": "^1.0.0" },
     { "name": "research-tools",         "version": "^1.0.0" },
     { "name": "architecture-review",    "version": "^1.0.0" }
   ]
@@ -211,7 +211,7 @@ The `dependencies` field in `plugin.json` is an **array** (string entries or `{ 
 {
   "name": "architecture-review",
   "version": "1.0.0",
-  "dependencies": [ { "name": "engineering-paved-path", "version": "^1.0.0" } ]
+  "dependencies": [ { "name": "engineering-practices", "version": "^1.0.0" } ]
 }
 ```
 
@@ -232,5 +232,5 @@ The `dependencies` field in `plugin.json` is an **array** (string entries or `{ 
 - ✅ **Packaging of `run-plan`/`retro`:** both are skills (`skills/run-plan/`, `skills/workflow-retro/`). `retro` ships `scripts/analyze_journals.py`.
 - ✅ **Content source:** branch `lesson-7-lab/multiagents-finish` (`af92aa88`), directory `.claude/`.
 - ✅ **Shape of `dependencies`:** an array of `{ "name", "version" }` entries (docs: plugins-reference). An object map is wrong.
-- ✅ **Cross-plugin dependency:** `architecture-review` → `engineering-paved-path ^1.0.0` (in addition to the three dependencies of `sdd-engineering`).
+- ✅ **Cross-plugin dependency:** `architecture-review` → `engineering-practices ^1.0.0` (in addition to the three dependencies of `sdd-engineering`).
 - ⚠️ **Generalizing `architecture-reviewer`** from the DevDigest version is its own body of work (§2.3), not a mechanical copy.

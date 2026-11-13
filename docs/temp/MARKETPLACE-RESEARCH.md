@@ -122,7 +122,7 @@ The main source is the AutoScout24 write-up (16 plugins, several teams):
 - **Research first, then standardize** — don't over-engineer before real skills appear.
 - **Pin versions, don't auto-update** external skills; update the catalog and the installed plugin separately.
 - **Portability:** keep `SKILL.md` (Markdown + YAML frontmatter) compatible with multiple agents.
-- **Dependency graph:** shared skills/agents have a single canonical source; version constraints are fixed; skills/agents from dependent plugins are used with a namespace (`engineering-paved-path:react-best-practices`, not the bare `react-best-practices`).
+- **Dependency graph:** shared skills/agents have a single canonical source; version constraints are fixed; skills/agents from dependent plugins are used with a namespace (`engineering-practices:react-best-practices`, not the bare `react-best-practices`).
 
 ---
 

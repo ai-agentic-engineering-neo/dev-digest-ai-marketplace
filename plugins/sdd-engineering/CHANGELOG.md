@@ -2,6 +2,11 @@
 
 All notable changes to `sdd-engineering` are documented here. Versioning follows [SemVer](https://semver.org/).
 
+## 1.0.1 — 2026-11-13
+
+### Changed
+- Dependency `engineering-paved-path` renamed to `engineering-practices`; namespaced skill references updated accordingly. No behavior change.
+
 ## 1.0.0 — 2026-07-12
 
 ### Added

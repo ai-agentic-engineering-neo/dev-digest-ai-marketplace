@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "engineering-paved-path",
-  "version": "1.0.0",
+  "name": "engineering-practices",
+  "version": "1.0.1",
   "description": "Shared engineering best-practice skills: React, Next.js, Fastify, testing, security, architecture, and full-stack foundations (TypeScript, Zod, Drizzle, Postgres).",
   "author": { "name": "DevDigest AI Engineering" },
   "repository": "https://github.com/burnjohn/dev-digest-ai-marketplace",
